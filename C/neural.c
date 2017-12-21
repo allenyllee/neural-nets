@@ -5,12 +5,12 @@ typedef struct _Neural Neural;
 typedef Unit* (*forward_func) (Neural *, Unit*, Unit*);
 typedef void (*backward_func) (Neural *);
 
-typedef struct _Unit{
+struct _Unit{
     float value;
     float grad;
 };
 
-typedef struct _Neural {
+struct _Neural {
     Neural *this;
     Unit *u1;
     Unit *u2;
@@ -23,6 +23,7 @@ Unit* add(Neural * const this, Unit *a, Unit *b){
     this->u1 = a;
     this->u2 = b;
     this->uout.value = this->u1->value + this->u2->value;
+    return &this->uout;
 }
 
 void addgrad(Neural * const this){
@@ -40,6 +41,7 @@ Unit* mul(Neural * const this, Unit *a, Unit *b){
     this->u1 = a;
     this->u2 = b;
     this->uout.value = this->u1->value * this->u2->value;
+    return &this->uout;
 }
 
 void mulgrad(Neural * const this){
@@ -54,7 +56,7 @@ void init_mul(Neural *const x){
 }
 
 
-void main(){
+int main(){
     Unit x = {.value=2,     .grad=0};
     Unit y = {.value=-1.5,  .grad=0};
     Unit z = {.value=-6,    .grad=0};
@@ -88,4 +90,5 @@ void main(){
 
     printf("forward value = %f\n", tmp->value);
 
+    return 0;
 }
