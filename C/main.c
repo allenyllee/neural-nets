@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
-#include "./neural.h"
-#include "./model.h"
-#include "./data.h"
+#include "neural.h"
+#include "model.h"
+#include "data.h"
 
 #define DATASIZE 6
+
 
 int main(){
     int count = 0;
@@ -22,27 +23,53 @@ int main(){
         a[i].grad = 0;
     }
 
+
+    Model1 m;
+    m.init = _init;
+
+
     int j=0;
     int i=0;
     srand(time(NULL));
-
+/*
     while (1){
         printf("loop %d\n",j);
-        i = rand() % DATASIZE ;
-        if ( model1(a,&d[i],1) * d[i].label <0 ){
+        //i = rand() % DATASIZE ;
+        i = j % DATASIZE ;
+        m.init(&m, a, &d[i]);
+
+        if ( m.forward(&m) * m.data->label <0 ){
             count = 0;
         }else {
             count += 1;
-            if(count == DATASIZE*5) break;
+            if(count == DATASIZE) break;
         }
-        j++;
-    }
 
+        m.backward(&m);
+        m.updateParameter(&m);
+        m.forward(&m);
+        j++;
+        //if(j == 200) break;
+    }
+*/
     printf("=============\n");
 
     for (int i=0; i<DATASIZE; i++){
-        model1(a,&d[i],0);
+        m.init(&m, a, &d[i]);
+        m.forward(&m);
     }
+
+    for (int j=0; j<1000; j++){
+        printf("=============\n");
+        for (int i=0; i<DATASIZE; i++){
+            m.init(&m, a, &d[i]);
+            m.forward(&m);
+            m.backward(&m);
+            m.updateParameter(&m);
+            m.forward(&m);
+        }
+    }
+
 
     return 0;
 }
