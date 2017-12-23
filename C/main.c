@@ -24,52 +24,76 @@ int main(){
     }
 
 
-    Model1 m;
-    m.init = _init;
+    //Model1 m;
+    //m.init = _init;
 
 
     int j=0;
     int i=0;
     srand(time(NULL));
-/*
+
     while (1){
         printf("loop %d\n",j);
         //i = rand() % DATASIZE ;
         i = j % DATASIZE ;
-        m.init(&m, a, &d[i]);
 
+        Model1 m;
+        m.init = _init;
+        m.init(&m, a, &d[i]);
+        m.forward(&m);
+
+        if ( m.data->label * m.out->value < 0 ){
+            count = 0;
+        }else {
+            count += 1;
+            printf("count = %d\n",count);
+            if(count == DATASIZE) break;
+        }
+/*
         if ( m.forward(&m) * m.data->label <0 ){
             count = 0;
         }else {
             count += 1;
             if(count == DATASIZE) break;
         }
-
+*/
+        //printf("debug4\n");
         m.backward(&m);
+        //printf("debug5\n");
         m.updateParameter(&m);
+
         m.forward(&m);
         j++;
-        //if(j == 200) break;
+        //if(j == 10) break;
     }
-*/
+
+
     printf("=============\n");
 
     for (int i=0; i<DATASIZE; i++){
+        Model1 m;
+        m.init = _init;
         m.init(&m, a, &d[i]);
         m.forward(&m);
     }
 
-    for (int j=0; j<1000; j++){
+/*
+    for (int j=0; j<10000; j++){
         printf("=============\n");
         for (int i=0; i<DATASIZE; i++){
+            //Model1 m;
+            //m.init = _init;
             m.init(&m, a, &d[i]);
-            m.forward(&m);
-            m.backward(&m);
-            m.updateParameter(&m);
-            m.forward(&m);
+            //m.forward(&m);
+            if (m.forward(&m) * m.data->label < 0) {
+                //printf("forward value = %f, label = %d\n", m.out->value, m.data->label);
+                m.backward(&m);
+                m.updateParameter(&m);
+            }
+            //m.forward(&m);
         }
     }
-
+*/
 
     return 0;
 }

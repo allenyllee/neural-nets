@@ -7,6 +7,7 @@
 
 
 #define PAR_NUM 3
+#define NEU_SIZE 10
 
 typedef struct _model1 Model1;
 typedef void (*modelInit) (Model1* this, Unit* const p, Data const * const d);
@@ -22,11 +23,11 @@ void _updateParameter(Model1* this);
 
 
 struct _model1 {
-    Unit* parameter;
-    Data const * data;
-    Unit* out;
+    Unit *parameter;
+    Data const *data;
+    Unit *out, in[DIM];
     NeuralSet addset, mulset;
-    Neural addneu[10], mulneu[10];
+    Neural addneu[NEU_SIZE], mulneu[NEU_SIZE];
     modelInit init;
     modelForward forward;
     modelBackward backward;
@@ -36,24 +37,36 @@ struct _model1 {
 void _init(Model1* this, Unit* const p, Data const * const d){
     init_add(&this->addset, this->addneu);
     init_mul(&this->mulset, this->mulneu);
+
+    // initialized neurals grad, to avoid strange thing when evaluate grad in backward function
+    for(int i=0; i<NEU_SIZE; i++){
+        this->addneu[i].uout.value = 0;
+        this->addneu[i].uout.grad = 0;
+        this->mulneu[i].uout.value = 0;
+        this->mulneu[i].uout.grad = 0;
+    }
+
     this->forward = _forward;
     this->backward = _backward;
     this->updateParameter = _updateParameter;
     this->parameter = p;
     this->data = d;
+
+    // initializ input value to avoid backward probelm
+    // in backward function, the last line is to process the very first varible passed in forward function
+    // you should not use local varible to save data value in forward function
+    // instead, use global varible declared in the structure
+    for (int i=0; i<DIM; i++){
+        this->in[i].value = this->data->x[i];
+    }
 }
 
 float _forward(Model1* this){
-    Unit u[DIM];
     Unit *tmp1 = NULL;
 
-    for (int i=0; i<DIM; i++){
-        u[i].value = this->data->x[i];
-    }
-
     // evaluate value
-    this->out = this->mulset.forward(&this->mulset.neurals[0], &this->parameter[0], &u[0]); //ax
-    tmp1 = this->mulset.forward(&this->mulset.neurals[1], &this->parameter[1], &u[1]); //by
+    this->out = this->mulset.forward(&this->mulset.neurals[0], &this->parameter[0], &this->in[0]); //ax
+    tmp1 = this->mulset.forward(&this->mulset.neurals[1], &this->parameter[1], &this->in[1]); //by
     this->out = this->addset.forward(&this->addset.neurals[0], this->out, tmp1); // ax+by
     this->out = this->addset.forward(&this->addset.neurals[1], this->out, &this->parameter[2]); // ax+by+c
 
@@ -63,21 +76,26 @@ float _forward(Model1* this){
 }
 
 void _backward(Model1* this){
-    //int pull=0;
-    /*
-    this->addset.neurals[1].uout.grad = 0;
-
+    int pull=1;
+/*
+    pull=0;
     if ( this->data->label == 1 && this->out->value < 1){
-        this->addset.neurals[1].uout.grad=1;
+        pull=1.0;
     }
 
     if ( this->data->label == -1 && this->out->value > -1){
-        this->addset.neurals[1].uout.grad=-1;
+        pull=-1.0;
     }
-    */
-    //printf("pull = %f\n",this->addset.neurals[1].uout.grad);
+*/
+
+    if (this->data->label * this->out->value < 0 ){
+        pull *= this->data->label;
+    }else {
+        pull = 0;
+    }
+
     // evaluate grad
-    this->addset.neurals[1].uout.grad = 1;
+    this->addset.neurals[1].uout.grad = pull;
     this->addset.backward(&this->addset.neurals[1]);
     this->addset.backward(&this->addset.neurals[0]);
     this->mulset.backward(&this->mulset.neurals[1]);
@@ -86,13 +104,13 @@ void _backward(Model1* this){
 
 void _updateParameter(Model1* this){
     float step_size = 0.001;
-
+/*
     if (this->data->label * this->out->value < 0 ){
         step_size *= this->data->label;
     }else {
         step_size = 0;
     }
-
+*/
     //printf("grad = ");
     // update input varible
     for (int i=0; i<PAR_NUM; i++){
