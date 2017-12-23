@@ -103,7 +103,7 @@ void _backward(Model1* this){
 }
 
 void _updateParameter(Model1* this){
-    float step_size = 0.001;
+    float step_size = 0.01;
 /*
     if (this->data->label * this->out->value < 0 ){
         step_size *= this->data->label;
